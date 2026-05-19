@@ -404,6 +404,36 @@
   <!-- ===== ADMIN VIEW ===== -->
   <div id="view-admin" class="view">
 
+    <!-- Admin Patient Registration -->
+    <div class="card">
+      <div class="card-title">Register Patient (Admin)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Patient Name</label>
+          <input type="text" id="admin-p-name" placeholder="e.g. Ahmad Razif">
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" id="admin-p-age" placeholder="e.g. 45" min="1" max="120">
+        </div>
+        <div class="form-group">
+          <label>ESI Level</label>
+          <select id="admin-p-esi">
+            <option value="">Select ESI Level</option>
+            <option value="1">ESI 1 — Critical / Life-threatening</option>
+            <option value="2">ESI 2 — High Urgency</option>
+            <option value="3">ESI 3 — Moderate</option>
+            <option value="4">ESI 4 — Low Urgency</option>
+            <option value="5">ESI 5 — Minor</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="adminAddPatient()">+ Register Patient</button>
+        <button class="btn btn-success btn-sm" onclick="adminLoadDefaults()">Load Sample Data</button>
+      </div>
+    </div>
+
     <div class="tabs">
       <button class="tab active" onclick="switchTab('utility')">② Utility</button>
       <button class="tab" onclick="switchTab('softmax')">③ SoftMax</button>
@@ -432,7 +462,7 @@
             </tbody>
           </table>
         </div>
-        <div class="btn-row"><button class="btn btn-primary" onclick="computeUtility()">Compute Utility</button></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="computeUtility()">Compute Utility</button><button class="btn btn-danger btn-sm" onclick="clearUtility()">Clear Utility</button></div>
       </div>
       <div class="card">
         <div class="card-title">Utility Formula</div>
@@ -454,7 +484,7 @@
       <div class="card">
         <div class="card-title">SoftMax Formula</div>
         <div class="formula">P(unit) = e^U(unit) / [ e^U(ICU) + e^U(ER) + e^U(FastTrack) ]</div>
-        <div class="btn-row"><button class="btn btn-primary" onclick="computeSoftmax()">Compute SoftMax</button></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="computeSoftmax()">Compute SoftMax</button><button class="btn btn-danger btn-sm" onclick="clearSoftmax()">Clear SoftMax</button></div>
       </div>
       <div class="card">
         <div class="card-title">SoftMax Probabilities</div>
@@ -476,7 +506,7 @@
           <div class="form-group"><label>ER Capacity (beds)</label><input type="number" id="cap-er" value="10" min="1" max="50"></div>
           <div class="form-group"><label>Fast Track Capacity (beds)</label><input type="number" id="cap-ft" value="15" min="1" max="50"></div>
         </div>
-        <div class="btn-row"><button class="btn btn-primary" onclick="assignPatients()">Assign Patients</button></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="assignPatients()">Assign Patients</button><button class="btn btn-danger btn-sm" onclick="clearAssignment()">Clear Assignment</button></div>
       </div>
       <div class="unit-cards">
         <div class="unit-card icu">
@@ -522,7 +552,7 @@
           <div class="form-group"><label>ER Service Rate μ (patients/min)</label><input type="number" id="mu-er" value="0.10" step="0.01" min="0.01"></div>
           <div class="form-group"><label>Fast Track Service Rate μ (patients/min)</label><input type="number" id="mu-ft" value="0.20" step="0.01" min="0.01"></div>
         </div>
-        <div class="btn-row"><button class="btn btn-primary" onclick="computeQueue()">Compute Queue</button></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="computeQueue()">Compute Queue</button><button class="btn btn-danger btn-sm" onclick="clearQueue()">Clear Queue</button></div>
       </div>
       <div class="card">
         <div class="card-title">Queue Formula</div>
@@ -548,7 +578,7 @@
           <div class="form-group"><label>ER Deterioration Rate δ</label><input type="number" id="delta-er" value="0.10" step="0.01" min="0"></div>
           <div class="form-group"><label>Fast Track Deterioration Rate δ</label><input type="number" id="delta-ft" value="0.05" step="0.01" min="0"></div>
         </div>
-        <div class="btn-row"><button class="btn btn-primary" onclick="computeDeterioration()">Compute Deterioration</button></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="computeDeterioration()">Compute Deterioration</button><button class="btn btn-danger btn-sm" onclick="clearDeterioration()">Clear Deterioration</button></div>
       </div>
       <div class="card">
         <div class="card-title">Deterioration Formula</div>
@@ -569,7 +599,7 @@
     <div id="tab-esi" class="tab-content">
       <div class="card">
         <div class="card-title">ESI Update</div>
-        <div class="btn-row"><button class="btn btn-primary" onclick="computeESIUpdate()">Update ESI Levels</button></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="computeESIUpdate()">Update ESI Levels</button><button class="btn btn-danger btn-sm" onclick="clearESIUpdate()">Clear ESI Update</button></div>
       </div>
       <div id="esi-alerts"></div>
       <div class="card">
@@ -677,6 +707,32 @@ function loadDefaults() {
   ];
   renderNursePatientList();
   log('Sample data loaded (5 patients).','success');
+}
+
+// ===== ADMIN PATIENT MANAGEMENT =====
+function adminAddPatient() {
+  const name=document.getElementById('admin-p-name').value.trim();
+  const age=parseInt(document.getElementById('admin-p-age').value);
+  const esi=parseInt(document.getElementById('admin-p-esi').value);
+  if(!name||!age||!esi){alert('Please fill in all fields.');return;}
+  const sev=getSeverityFromESI(esi);
+  const id='P'+String(patients.length+1).padStart(3,'0');
+  patients.push({id,name,age,esi,severity:sev});
+  document.getElementById('admin-p-name').value='';
+  document.getElementById('admin-p-age').value='';
+  document.getElementById('admin-p-esi').value='';
+  log(`${id} (${name}) registered by admin — ESI ${esi}, Severity ${sev}`,'success');
+}
+
+function adminLoadDefaults() {
+  patients=[
+    {id:'P001',name:'Ahmad Razif', age:65,esi:1,severity:9.2},
+    {id:'P002',name:'Siti Nurbaya',age:45,esi:2,severity:7.1},
+    {id:'P003',name:'Rajendran',   age:34,esi:3,severity:5.0},
+    {id:'P004',name:'Nurul Ain',   age:28,esi:4,severity:3.2},
+    {id:'P005',name:'Chong Wei',   age:19,esi:5,severity:1.5},
+  ];
+  log('Sample data loaded by admin (5 patients).','success');
 }
 
 // ===== NURSE RENDER =====
@@ -910,8 +966,109 @@ function computeESIUpdate() {
   log(`ESI update — ${det.length} patient(s) deteriorated.`,det.length>0?'error':'success');
 }
 
+// ===== CLEAR FUNCTIONS FOR ADMIN TABS =====
+function clearUtility() {
+  utilityResults = [];
+  softmaxResults = [];
+  assignmentResults = [];
+  queueResults = {};
+  deteriorationResults = [];
+  esiUpdateResults = [];
+  document.getElementById('utility-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📊</div><p>Click "Compute Utility" to calculate</p></div></td></tr>';
+  document.getElementById('softmax-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📈</div><p>Click "Compute SoftMax" to calculate</p></div></td></tr>';
+  document.getElementById('assignment-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🏥</div><p>Click "Assign Patients" to proceed</p></div></td></tr>';
+  document.getElementById('queue-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⏱️</div><p>Click "Compute Queue" to calculate</p></div></td></tr>';
+  document.getElementById('deterioration-table').innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📉</div><p>Click "Compute Deterioration" to calculate</p></div></td></tr>';
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
+  document.getElementById('icu-occupied').textContent = '0';
+  document.getElementById('er-occupied').textContent = '0';
+  document.getElementById('ft-occupied').textContent = '0';
+  document.getElementById('icu-congestion').textContent = '0%';
+  document.getElementById('er-congestion').textContent = '0%';
+  document.getElementById('ft-congestion').textContent = '0%';
+  document.getElementById('icu-bar').style.width = '0%';
+  document.getElementById('er-bar').style.width = '0%';
+  document.getElementById('ft-bar').style.width = '0%';
+  log('Utility and all downstream results cleared.', 'warn');
+}
+
+function clearSoftmax() {
+  softmaxResults = [];
+  assignmentResults = [];
+  queueResults = {};
+  deteriorationResults = [];
+  esiUpdateResults = [];
+  document.getElementById('softmax-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📈</div><p>Click "Compute SoftMax" to calculate</p></div></td></tr>';
+  document.getElementById('assignment-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🏥</div><p>Click "Assign Patients" to proceed</p></div></td></tr>';
+  document.getElementById('queue-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⏱️</div><p>Click "Compute Queue" to calculate</p></div></td></tr>';
+  document.getElementById('deterioration-table').innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📉</div><p>Click "Compute Deterioration" to calculate</p></div></td></tr>';
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
+  document.getElementById('icu-occupied').textContent = '0';
+  document.getElementById('er-occupied').textContent = '0';
+  document.getElementById('ft-occupied').textContent = '0';
+  document.getElementById('icu-congestion').textContent = '0%';
+  document.getElementById('er-congestion').textContent = '0%';
+  document.getElementById('ft-congestion').textContent = '0%';
+  document.getElementById('icu-bar').style.width = '0%';
+  document.getElementById('er-bar').style.width = '0%';
+  document.getElementById('ft-bar').style.width = '0%';
+  log('SoftMax and all downstream results cleared.', 'warn');
+}
+
+function clearAssignment() {
+  assignmentResults = [];
+  queueResults = {};
+  deteriorationResults = [];
+  esiUpdateResults = [];
+  document.getElementById('assignment-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🏥</div><p>Click "Assign Patients" to proceed</p></div></td></tr>';
+  document.getElementById('queue-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⏱️</div><p>Click "Compute Queue" to calculate</p></div></td></tr>';
+  document.getElementById('deterioration-table').innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📉</div><p>Click "Compute Deterioration" to calculate</p></div></td></tr>';
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
+  document.getElementById('icu-occupied').textContent = '0';
+  document.getElementById('er-occupied').textContent = '0';
+  document.getElementById('ft-occupied').textContent = '0';
+  document.getElementById('icu-congestion').textContent = '0%';
+  document.getElementById('er-congestion').textContent = '0%';
+  document.getElementById('ft-congestion').textContent = '0%';
+  document.getElementById('icu-bar').style.width = '0%';
+  document.getElementById('er-bar').style.width = '0%';
+  document.getElementById('ft-bar').style.width = '0%';
+  log('Assignment and all downstream results cleared.', 'warn');
+}
+
+function clearQueue() {
+  queueResults = {};
+  deteriorationResults = [];
+  esiUpdateResults = [];
+  document.getElementById('queue-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⏱️</div><p>Click "Compute Queue" to calculate</p></div></td></tr>';
+  document.getElementById('deterioration-table').innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📉</div><p>Click "Compute Deterioration" to calculate</p></div></td></tr>';
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
+  log('Queue and downstream results cleared.', 'warn');
+}
+
+function clearDeterioration() {
+  deteriorationResults = [];
+  esiUpdateResults = [];
+  document.getElementById('deterioration-table').innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📉</div><p>Click "Compute Deterioration" to calculate</p></div></td></tr>';
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
+  log('Deterioration and ESI update results cleared.', 'warn');
+}
+
+function clearESIUpdate() {
+  esiUpdateResults = [];
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
+  log('ESI update results cleared.', 'warn');
+}
+
 // Init
 loadDefaults();
+
 </script>
 </body>
 </html>
