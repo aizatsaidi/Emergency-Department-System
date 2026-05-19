@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ED Simulation System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2234;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --critical: #ff3b5c;
+    --warning: #ffaa00;
+    --safe: #00e5a0;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --icu: #ff3b5c;
+    --er: #ffaa00;
+    --ft: #00e5a0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--accent), #0080ff);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 0 20px rgba(0,212,255,0.3);
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--safe);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .tab.active {
+    background: var(--surface2);
+    color: var(--accent);
+    border: 1px solid var(--border);
+  }
+
+  .tab:hover:not(.active) {
+    color: var(--text);
+  }
+
+  /* Tab content */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Grid layouts */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* Form elements */
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  input, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0,212,255,0.1);
+  }
+
+  select option {
+    background: var(--surface2);
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #0080ff);
+    color: #000;
+    box-shadow: 0 4px 15px rgba(0,212,255,0.2);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,212,255,0.3);
+  }
+
+  .btn-danger {
+    background: linear-gradient(135deg, var(--critical), #cc0033);
+    color: #fff;
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--safe), #00aa77);
+    color: #000;
+  }
+
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  /* Tables */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead tr {
+    background: var(--surface2);
+  }
+
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  tr:hover td {
+    background: rgba(255,255,255,0.02);
+  }
+
+  /* ESI badges */
+  .esi-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .esi-1 { background: rgba(255,59,92,0.2); color: #ff3b5c; border: 1px solid rgba(255,59,92,0.3); }
+  .esi-2 { background: rgba(255,100,50,0.2); color: #ff6432; border: 1px solid rgba(255,100,50,0.3); }
+  .esi-3 { background: rgba(255,170,0,0.2); color: #ffaa00; border: 1px solid rgba(255,170,0,0.3); }
+  .esi-4 { background: rgba(0,212,255,0.2); color: #00d4ff; border: 1px solid rgba(0,212,255,0.3); }
+  .esi-5 { background: rgba(0,229,160,0.2); color: #00e5a0; border: 1px solid rgba(0,229,160,0.3); }
+
+  /* Unit badges */
+  .unit-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .unit-icu { background: rgba(255,59,92,0.15); color: var(--icu); border: 1px solid rgba(255,59,92,0.3); }
+  .unit-er { background: rgba(255,170,0,0.15); color: var(--er); border: 1px solid rgba(255,170,0,0.3); }
+  .unit-ft { background: rgba(0,229,160,0.15); color: var(--ft); border: 1px solid rgba(0,229,160,0.3); }
+
+  /* Unit cards */
+  .unit-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .unit-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .unit-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+
+  .unit-card.icu::before { background: var(--icu); }
+  .unit-card.er::before { background: var(--er); }
+  .unit-card.ft::before { background: var(--ft); }
+
+  .unit-name {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .unit-card.icu .unit-name { color: var(--icu); }
+  .unit-card.er .unit-name { color: var(--er); }
+  .unit-card.ft .unit-name { color: var(--ft); }
+
+  .unit-full-name {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .unit-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .unit-stat-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .unit-stat-value {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .unit-card.icu .progress-fill { background: var(--icu); }
+  .unit-card.er .progress-fill { background: var(--er); }
+  .unit-card.ft .progress-fill { background: var(--ft); }
+
+  /* Probability bars */
+  .prob-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .prob-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .prob-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    width: 30px;
+    color: var(--text-dim);
+  }
+
+  .prob-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .prob-fill-icu { background: var(--icu); height: 100%; border-radius: 4px; transition: width 0.5s; }
+  .prob-fill-er { background: var(--er); height: 100%; border-radius: 4px; transition: width 0.5s; }
+  .prob-fill-ft { background: var(--ft); height: 100%; border-radius: 4px; transition: width 0.5s; }
+
+  .prob-pct {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    width: 45px;
+    text-align: right;
+    color: var(--text);
+  }
+
+  /* Alert */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .alert-warning {
+    background: rgba(255,170,0,0.1);
+    border: 1px solid rgba(255,170,0,0.3);
+    color: var(--warning);
+  }
+
+  .alert-danger {
+    background: rgba(255,59,92,0.1);
+    border: 1px solid rgba(255,59,92,0.3);
+    color: var(--critical);
+  }
+
+  .alert-success {
+    background: rgba(0,229,160,0.1);
+    border: 1px solid rgba(0,229,160,0.3);
+    color: var(--safe);
+  }
+
+  /* Deterioration indicator */
+  .deteriorated {
+    color: var(--critical);
+    font-weight: 700;
+  }
+
+  .stable {
+    color: var(--safe);
+  }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+
+  .step.done {
+    background: rgba(0,229,160,0.1);
+    border-color: rgba(0,229,160,0.3);
+    color: var(--safe);
+  }
+
+  .step.active {
+    background: rgba(0,212,255,0.1);
+    border-color: rgba(0,212,255,0.3);
+    color: var(--accent);
+  }
+
+  .step-num {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    background: var(--border);
+  }
+
+  .step.done .step-num { background: var(--safe); color: #000; }
+  .step.active .step-num { background: var(--accent); color: #000; }
+
+  /* Value highlight */
+  .val {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+  }
+
+  .val-accent { color: var(--accent); }
+  .val-critical { color: var(--critical); }
+  .val-warning { color: var(--warning); }
+  .val-safe { color: var(--safe); }
+
+  /* Section divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px;
+    color: var(--text-dim);
+  }
+
+  .empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.3;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+  }
+
+  /* Simulation log */
+  .log {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    max-height: 200px;
+    overflow-y: auto;
+    line-height: 1.8;
+  }
+
+  .log-entry { color: var(--text-dim); }
+  .log-entry.info { color: var(--accent); }
+  .log-entry.warn { color: var(--warning); }
+  .log-entry.error { color: var(--critical); }
+  .log-entry.success { color: var(--safe); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .unit-cards { grid-template-columns: 1fr; }
+    .tabs { flex-wrap: wrap; }
+  }
+
+  /* Animation */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-in {
+    animation: fadeIn 0.3s ease forwards;
+  }
+
+  .highlight-row td {
+    background: rgba(255,59,92,0.05) !important;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🏥</div>
+      <div>
+        <h1>ED <span>Simulation</span> System</h1>
+        <div class="subtitle">Emergency Department · Discrete Model · STTHK2133</div>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      System Ready
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('patients')">① Patients</button>
+    <button class="tab" onclick="switchTab('utility')">② Utility</button>
+    <button class="tab" onclick="switchTab('softmax')">③ SoftMax</button>
+    <button class="tab" onclick="switchTab('assignment')">④ Assignment</button>
+    <button class="tab" onclick="switchTab('queue')">⑤ Queue</button>
+    <button class="tab" onclick="switchTab('deterioration')">⑥ Deterioration</button>
+    <button class="tab" onclick="switchTab('esi')">⑦ ESI Update</button>
+  </div>
+
+  <!-- TAB 1: PATIENTS -->
+  <div id="tab-patients" class="tab-content active">
+    <div class="card">
+      <div class="card-title">Register Patient</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Patient Name</label>
+          <input type="text" id="p-name" placeholder="e.g. Ahmad Razif">
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" id="p-age" placeholder="e.g. 45" min="1" max="120">
+        </div>
+        <div class="form-group">
+          <label>ESI Level</label>
+          <select id="p-esi">
+            <option value="">Select ESI</option>
+            <option value="1">ESI 1 — Critical</option>
+            <option value="2">ESI 2 — High Urgency</option>
+            <option value="3">ESI 3 — Moderate</option>
+            <option value="4">ESI 4 — Low Urgency</option>
+            <option value="5">ESI 5 — Minor</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Severity Score (auto)</label>
+          <input type="number" id="p-severity" placeholder="Auto from ESI" step="0.1" min="0" max="15">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addPatient()">+ Register Patient</button>
+        <button class="btn btn-danger btn-sm" onclick="clearPatients()">Clear All</button>
+        <button class="btn btn-success btn-sm" onclick="loadDefaults()">Load Sample Data</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Patient Registry</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Age</th>
+              <th>ESI</th>
+              <th>Severity</th>
+              <th>Clinical</th>
+              <th>Pathway</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="patient-table">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">👤</div><p>No patients registered yet</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ESI Reference -->
+    <div class="card">
+      <div class="card-title">ESI Reference Table</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Severity Score</th><th>ESI Level</th><th>Clinical</th><th>Pathway</th></tr></thead>
+          <tbody>
+            <tr><td class="val val-critical">S ≥ 8</td><td><span class="esi-badge esi-1">1</span></td><td>Critical / Life-threatening</td><td><span class="unit-badge unit-icu">ICU</span></td></tr>
+            <tr><td class="val val-warning">6 ≤ S &lt; 8</td><td><span class="esi-badge esi-2">2</span></td><td>High Urgency</td><td><span class="unit-badge unit-icu">ICU</span> / <span class="unit-badge unit-er">ER</span></td></tr>
+            <tr><td class="val val-warning">4 ≤ S &lt; 6</td><td><span class="esi-badge esi-3">3</span></td><td>Moderate Condition</td><td><span class="unit-badge unit-er">ER</span></td></tr>
+            <tr><td class="val val-accent">2 ≤ S &lt; 4</td><td><span class="esi-badge esi-4">4</span></td><td>Low Urgency</td><td><span class="unit-badge unit-ft">Fast Track</span></td></tr>
+            <tr><td class="val val-safe">S &lt; 2</td><td><span class="esi-badge esi-5">5</span></td><td>Minor Condition</td><td><span class="unit-badge unit-ft">Fast Track</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: UTILITY -->
+  <div id="tab-utility" class="tab-content">
+    <div class="card">
+      <div class="card-title">Utility Function Parameters</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>α — Severity Weight</label>
+          <input type="number" id="alpha" value="1.0" step="0.1" min="0" max="5">
+        </div>
+        <div class="form-group">
+          <label>β — Waiting Time Weight</label>
+          <input type="number" id="beta" value="0.5" step="0.1" min="0" max="5">
+        </div>
+      </div>
+      <div class="card-title" style="margin-top:16px;">Suitability Matrix</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Unit</th><th>ESI 1-2</th><th>ESI 3</th><th>ESI 4-5</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="unit-badge unit-icu">ICU</span></td>
+              <td><input type="number" id="s-icu-12" value="1.0" step="0.1" min="0" max="1" style="width:70px"></td>
+              <td><input type="number" id="s-icu-3" value="0.5" step="0.1" min="0" max="1" style="width:70px"></td>
+              <td><input type="number" id="s-icu-45" value="0.1" step="0.1" min="0" max="1" style="width:70px"></td>
+            </tr>
+            <tr>
+              <td><span class="unit-badge unit-er">ER</span></td>
+              <td><input type="number" id="s-er-12" value="0.5" step="0.1" min="0" max="1" style="width:70px"></td>
+              <td><input type="number" id="s-er-3" value="1.0" step="0.1" min="0" max="1" style="width:70px"></td>
+              <td><input type="number" id="s-er-45" value="0.3" step="0.1" min="0" max="1" style="width:70px"></td>
+            </tr>
+            <tr>
+              <td><span class="unit-badge unit-ft">Fast Track</span></td>
+              <td><input type="number" id="s-ft-12" value="0.1" step="0.1" min="0" max="1" style="width:70px"></td>
+              <td><input type="number" id="s-ft-3" value="0.3" step="0.1" min="0" max="1" style="width:70px"></td>
+              <td><input type="number" id="s-ft-45" value="1.0" step="0.1" min="0" max="1" style="width:70px"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="computeUtility()">Compute Utility</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Utility Formula</div>
+      <div style="font-family:'Space Mono',monospace; font-size:14px; color:var(--accent); padding:12px; background:var(--surface2); border-radius:8px; border:1px solid var(--border);">
+        U(unit) = (α × S × suitability) − (β × W)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Utility Results</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Patient</th><th>ESI</th><th>Severity</th><th>U(ICU)</th><th>U(ER)</th><th>U(Fast Track)</th><th>Best Unit</th></tr></thead>
+          <tbody id="utility-table">
+            <tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📊</div><p>Click "Compute Utility" to calculate</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: SOFTMAX -->
+  <div id="tab-softmax" class="tab-content">
+    <div class="card">
+      <div class="card-title">SoftMax Formula</div>
+      <div style="font-family:'Space Mono',monospace; font-size:13px; color:var(--accent); padding:12px; background:var(--surface2); border-radius:8px; border:1px solid var(--border); line-height:2;">
+        P(unit) = e^U(unit) / [ e^U(ICU) + e^U(ER) + e^U(FastTrack) ]
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="computeSoftmax()">Compute SoftMax</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">SoftMax Probabilities</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Patient</th><th>ESI</th><th>P(ICU)</th><th>P(ER)</th><th>P(Fast Track)</th><th>Visualization</th></tr></thead>
+          <tbody id="softmax-table">
+            <tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📈</div><p>Click "Compute SoftMax" to calculate</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: ASSIGNMENT -->
+  <div id="tab-assignment" class="tab-content">
+    <div class="card">
+      <div class="card-title">Unit Capacities (Initial State)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ICU Capacity (beds)</label>
+          <input type="number" id="cap-icu" value="5" min="1" max="50">
+        </div>
+        <div class="form-group">
+          <label>ER Capacity (beds)</label>
+          <input type="number" id="cap-er" value="10" min="1" max="50">
+        </div>
+        <div class="form-group">
+          <label>Fast Track Capacity (beds)</label>
+          <input type="number" id="cap-ft" value="15" min="1" max="50">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="assignPatients()">Assign Patients</button>
+      </div>
+    </div>
+
+    <div class="unit-cards">
+      <div class="unit-card icu">
+        <div class="unit-name">ICU</div>
+        <div class="unit-full-name">Intensive Care Unit</div>
+        <div class="unit-stat">
+          <span class="unit-stat-label">Occupied</span>
+          <span class="unit-stat-value" id="icu-occupied" style="color:var(--icu)">0</span>
+        </div>
+        <div class="unit-stat">
+          <span class="unit-stat-label">Capacity</span>
+          <span class="unit-stat-value" id="icu-cap-display">5</span>
+        </div>
+        <div class="unit-stat">
+          <span class="unit-stat-label">Congestion</span>
+          <span class="unit-stat-value" id="icu-congestion">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="icu-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="unit-card er">
+        <div class="unit-name">ER</div>
+        <div class="unit-full-name">Emergency Room</div>
+        <div class="unit-stat">
+          <span class="unit-stat-label">Occupied</span>
+          <span class="unit-stat-value" id="er-occupied" style="color:var(--er)">0</span>
+        </div>
+        <div class="unit-stat">
+          <span class="unit-stat-label">Capacity</span>
+          <span class="unit-stat-value" id="er-cap-display">10</span>
+        </div>
+        <div class="unit-stat">
+          <span class="unit-stat-label">Congestion</span>
+          <span class="unit-stat-value" id="er-congestion">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="er-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="unit-card ft">
+        <div class="unit-name">FT</div>
+        <div class="unit-full-name">Fast Track</div>
+        <div class="unit-stat">
+          <span class="unit-stat-label">Occupied</span>
+          <span class="unit-stat-value" id="ft-occupied" style="color:var(--ft)">0</span>
+        </div>
+        <div class="unit-stat">
+          <span class="unit-stat-label">Capacity</span>
+          <span class="unit-stat-value" id="ft-cap-display">15</span>
+        </div>
+        <div class="unit-stat">
+          <span class="unit-stat-label">Congestion</span>
+          <span class="unit-stat-value" id="ft-congestion">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="ft-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Assignment Results</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Patient</th><th>ESI</th><th>Severity</th><th>P(ICU)</th><th>P(ER)</th><th>P(FT)</th><th>Assigned Unit</th></tr></thead>
+          <tbody id="assignment-table">
+            <tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🏥</div><p>Click "Assign Patients" to proceed</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: QUEUE -->
+  <div id="tab-queue" class="tab-content">
+    <div class="card">
+      <div class="card-title">Queue System Parameters</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Arrival Rate λ (patients/hour)</label>
+          <input type="number" id="arrival-rate" value="6" min="1" max="60">
+        </div>
+        <div class="form-group">
+          <label>ICU Service Rate μ (patients/min)</label>
+          <input type="number" id="mu-icu" value="0.05" step="0.01" min="0.01">
+        </div>
+        <div class="form-group">
+          <label>ER Service Rate μ (patients/min)</label>
+          <input type="number" id="mu-er" value="0.10" step="0.01" min="0.01">
+        </div>
+        <div class="form-group">
+          <label>Fast Track Service Rate μ (patients/min)</label>
+          <input type="number" id="mu-ft" value="0.20" step="0.01" min="0.01">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="computeQueue()">Compute Queue</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Queue Formula</div>
+      <div style="font-family:'Space Mono',monospace; font-size:13px; color:var(--accent); padding:12px; background:var(--surface2); border-radius:8px; border:1px solid var(--border); line-height:2;">
+        W(unit) = N(unit) / μ(unit)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Queue & Waiting Time Results</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Unit</th><th>Patients (N)</th><th>Capacity</th><th>Congestion</th><th>Service Rate μ</th><th>Waiting Time W</th></tr></thead>
+          <tbody id="queue-table">
+            <tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⏱️</div><p>Click "Compute Queue" to calculate</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: DETERIORATION -->
+  <div id="tab-deterioration" class="tab-content">
+    <div class="card">
+      <div class="card-title">Deterioration Parameters</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ICU Deterioration Rate δ</label>
+          <input type="number" id="delta-icu" value="0.05" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>ER Deterioration Rate δ</label>
+          <input type="number" id="delta-er" value="0.10" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>Fast Track Deterioration Rate δ</label>
+          <input type="number" id="delta-ft" value="0.05" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="computeDeterioration()">Compute Deterioration</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Deterioration Formula</div>
+      <div style="font-family:'Space Mono',monospace; font-size:13px; color:var(--accent); padding:12px; background:var(--surface2); border-radius:8px; border:1px solid var(--border); line-height:2;">
+        S_new = S_old + (δ × W)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Severity Update Results</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Patient</th><th>Unit</th><th>S_old</th><th>δ</th><th>W (mins)</th><th>Increase</th><th>S_new</th><th>Worsened?</th></tr></thead>
+          <tbody id="deterioration-table">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📉</div><p>Click "Compute Deterioration" to calculate</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 7: ESI UPDATE -->
+  <div id="tab-esi" class="tab-content">
+    <div class="card">
+      <div class="card-title">ESI Update</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="computeESIUpdate()">Update ESI Levels</button>
+      </div>
+    </div>
+
+    <div id="esi-alerts"></div>
+
+    <div class="card">
+      <div class="card-title">ESI Update Results</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Patient</th><th>S_old</th><th>ESI_old</th><th>S_new</th><th>ESI_new</th><th>Status</th><th>Action Required</th></tr></thead>
+          <tbody id="esi-table">
+            <tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Simulation Log -->
+    <div class="card">
+      <div class="card-title">Simulation Log</div>
+      <div class="log" id="sim-log">
+        <div class="log-entry info">[ SYSTEM ] ED Simulation System initialized.</div>
+        <div class="log-entry">[ INFO   ] Load sample data or register patients to begin.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ==================== DATA ====================
+let patients = [];
+let utilityResults = [];
+let softmaxResults = [];
+let assignmentResults = [];
+let queueResults = {};
+let deteriorationResults = [];
+let esiUpdateResults = [];
+
+// ==================== HELPERS ====================
+function getSeverityFromESI(esi) {
+  const ranges = { 1: [8.0, 10.0], 2: [6.0, 7.9], 3: [4.0, 5.9], 4: [2.0, 3.9], 5: [0.5, 1.9] };
+  const [min, max] = ranges[esi];
+  return parseFloat((Math.random() * (max - min) + min).toFixed(1));
+}
+
+function getESIFromSeverity(s) {
+  if (s >= 8) return 1;
+  if (s >= 6) return 2;
+  if (s >= 4) return 3;
+  if (s >= 2) return 4;
+  return 5;
+}
+
+function getClinical(esi) {
+  const c = { 1: 'Critical / Life-threatening', 2: 'High Urgency', 3: 'Moderate Condition', 4: 'Low Urgency', 5: 'Minor Condition' };
+  return c[esi] || '-';
+}
+
+function getPathway(esi) {
+  if (esi <= 2) return '<span class="unit-badge unit-icu">ICU</span>';
+  if (esi === 3) return '<span class="unit-badge unit-er">ER</span>';
+  return '<span class="unit-badge unit-ft">Fast Track</span>';
+}
+
+function getESIBadge(esi) {
+  return `<span class="esi-badge esi-${esi}">${esi}</span>`;
+}
+
+function getSuitability(unit, esi) {
+  const icu12 = parseFloat(document.getElementById('s-icu-12').value);
+  const icu3  = parseFloat(document.getElementById('s-icu-3').value);
+  const icu45 = parseFloat(document.getElementById('s-icu-45').value);
+  const er12  = parseFloat(document.getElementById('s-er-12').value);
+  const er3   = parseFloat(document.getElementById('s-er-3').value);
+  const er45  = parseFloat(document.getElementById('s-er-45').value);
+  const ft12  = parseFloat(document.getElementById('s-ft-12').value);
+  const ft3   = parseFloat(document.getElementById('s-ft-3').value);
+  const ft45  = parseFloat(document.getElementById('s-ft-45').value);
+
+  if (unit === 'ICU')  return esi <= 2 ? icu12 : esi === 3 ? icu3 : icu45;
+  if (unit === 'ER')   return esi <= 2 ? er12  : esi === 3 ? er3  : er45;
+  if (unit === 'FT')   return esi <= 2 ? ft12  : esi === 3 ? ft3  : ft45;
+  return 0;
+}
+
+function getWaiting(unit) {
+  return queueResults[unit] || 0;
+}
+
+function log(msg, type = '') {
+  const logEl = document.getElementById('sim-log');
+  const ts = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  div.className = `log-entry ${type}`;
+  div.textContent = `[ ${ts} ] ${msg}`;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ==================== TAB SWITCH ====================
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  const tabs = ['patients','utility','softmax','assignment','queue','deterioration','esi'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+}
+
+// ==================== PATIENTS ====================
+function addPatient() {
+  const name = document.getElementById('p-name').value.trim();
+  const age  = parseInt(document.getElementById('p-age').value);
+  const esi  = parseInt(document.getElementById('p-esi').value);
+  let sev    = parseFloat(document.getElementById('p-severity').value);
+
+  if (!name || !age || !esi) { alert('Please fill in Name, Age, and ESI Level.'); return; }
+  if (isNaN(sev) || sev === 0) sev = getSeverityFromESI(esi);
+
+  const id = 'P' + String(patients.length + 1).padStart(3, '0');
+  patients.push({ id, name, age, esi, severity: sev });
+  renderPatients();
+  log(`Patient ${id} (${name}) registered — ESI ${esi}, Severity ${sev}`, 'success');
+
+  document.getElementById('p-name').value = '';
+  document.getElementById('p-age').value = '';
+  document.getElementById('p-esi').value = '';
+  document.getElementById('p-severity').value = '';
+}
+
+function removePatient(idx) {
+  const p = patients[idx];
+  patients.splice(idx, 1);
+  patients.forEach((p, i) => p.id = 'P' + String(i + 1).padStart(3, '0'));
+  renderPatients();
+  log(`Patient ${p.name} removed.`, 'warn');
+}
+
+function clearPatients() {
+  patients = [];
+  utilityResults = []; softmaxResults = []; assignmentResults = [];
+  queueResults = {}; deteriorationResults = []; esiUpdateResults = [];
+  renderPatients();
+  log('All patients cleared.', 'warn');
+}
+
+function loadDefaults() {
+  patients = [
+    { id: 'P001', name: 'Ahmad Razif',  age: 65, esi: 1, severity: 9.2 },
+    { id: 'P002', name: 'Siti Nurbaya', age: 45, esi: 2, severity: 7.1 },
+    { id: 'P003', name: 'Rajendran',    age: 34, esi: 3, severity: 5.0 },
+    { id: 'P004', name: 'Nurul Ain',    age: 28, esi: 4, severity: 3.2 },
+    { id: 'P005', name: 'Chong Wei',    age: 19, esi: 5, severity: 1.5 },
+  ];
+  renderPatients();
+  log('Sample patient data loaded (5 patients).', 'success');
+}
+
+function renderPatients() {
+  const tbody = document.getElementById('patient-table');
+  if (patients.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">👤</div><p>No patients registered yet</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = patients.map((p, i) => `
+    <tr class="animate-in">
+      <td class="val val-accent">${p.id}</td>
+      <td>${p.name}</td>
+      <td>${p.age}</td>
+      <td>${getESIBadge(p.esi)}</td>
+      <td class="val">${p.severity.toFixed(1)}</td>
+      <td>${getClinical(p.esi)}</td>
+      <td>${getPathway(p.esi)}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="removePatient(${i})">Remove</button></td>
+    </tr>
+  `).join('');
+}
+
+// ==================== UTILITY ====================
+function computeUtility() {
+  if (patients.length === 0) { alert('Please register patients first.'); return; }
+  const alpha = parseFloat(document.getElementById('alpha').value);
+  const beta  = parseFloat(document.getElementById('beta').value);
+
+  utilityResults = patients.map(p => {
+    const wICU = getWaiting('ICU');
+    const wER  = getWaiting('ER');
+    const wFT  = getWaiting('FT');
+
+    const uICU = parseFloat(((alpha * p.severity * getSuitability('ICU', p.esi)) - (beta * wICU)).toFixed(2));
+    const uER  = parseFloat(((alpha * p.severity * getSuitability('ER',  p.esi)) - (beta * wER)).toFixed(2));
+    const uFT  = parseFloat(((alpha * p.severity * getSuitability('FT',  p.esi)) - (beta * wFT)).toFixed(2));
+
+    const best = uICU >= uER && uICU >= uFT ? 'ICU' : uER >= uFT ? 'ER' : 'FT';
+    return { ...p, uICU, uER, uFT, best };
+  });
+
+  const tbody = document.getElementById('utility-table');
+  tbody.innerHTML = utilityResults.map(r => `
+    <tr class="animate-in">
+      <td class="val val-accent">${r.id} — ${r.name}</td>
+      <td>${getESIBadge(r.esi)}</td>
+      <td class="val">${r.severity.toFixed(1)}</td>
+      <td class="val" style="color:var(--icu)">${r.uICU.toFixed(2)}</td>
+      <td class="val" style="color:var(--er)">${r.uER.toFixed(2)}</td>
+      <td class="val" style="color:var(--ft)">${r.uFT.toFixed(2)}</td>
+      <td>${r.best === 'ICU' ? '<span class="unit-badge unit-icu">ICU</span>' : r.best === 'ER' ? '<span class="unit-badge unit-er">ER</span>' : '<span class="unit-badge unit-ft">Fast Track</span>'}</td>
+    </tr>
+  `).join('');
+
+  log('Utility scores computed for all patients.', 'info');
+}
+
+// ==================== SOFTMAX ====================
+function computeSoftmax() {
+  if (utilityResults.length === 0) { alert('Please compute utility first.'); return; }
+
+  softmaxResults = utilityResults.map(r => {
+    const eICU = Math.exp(r.uICU);
+    const eER  = Math.exp(r.uER);
+    const eFT  = Math.exp(r.uFT);
+    const total = eICU + eER + eFT;
+    const pICU = parseFloat((eICU / total).toFixed(2));
+    const pER  = parseFloat((eER  / total).toFixed(2));
+    const pFT  = parseFloat((eFT  / total).toFixed(2));
+    return { ...r, pICU, pER, pFT };
+  });
+
+  const tbody = document.getElementById('softmax-table');
+  tbody.innerHTML = softmaxResults.map(r => `
+    <tr class="animate-in">
+      <td class="val val-accent">${r.id} — ${r.name}</td>
+      <td>${getESIBadge(r.esi)}</td>
+      <td class="val" style="color:var(--icu)">${r.pICU.toFixed(2)} (${(r.pICU*100).toFixed(0)}%)</td>
+      <td class="val" style="color:var(--er)">${r.pER.toFixed(2)} (${(r.pER*100).toFixed(0)}%)</td>
+      <td class="val" style="color:var(--ft)">${r.pFT.toFixed(2)} (${(r.pFT*100).toFixed(0)}%)</td>
+      <td>
+        <div class="prob-bars">
+          <div class="prob-bar-row">
+            <span class="prob-label" style="color:var(--icu)">ICU</span>
+            <div class="prob-track"><div class="prob-fill-icu" style="width:${r.pICU*100}%"></div></div>
+            <span class="prob-pct">${(r.pICU*100).toFixed(0)}%</span>
+          </div>
+          <div class="prob-bar-row">
+            <span class="prob-label" style="color:var(--er)">ER</span>
+            <div class="prob-track"><div class="prob-fill-er" style="width:${r.pER*100}%"></div></div>
+            <span class="prob-pct">${(r.pER*100).toFixed(0)}%</span>
+          </div>
+          <div class="prob-bar-row">
+            <span class="prob-label" style="color:var(--ft)">FT</span>
+            <div class="prob-track"><div class="prob-fill-ft" style="width:${r.pFT*100}%"></div></div>
+            <span class="prob-pct">${(r.pFT*100).toFixed(0)}%</span>
+          </div>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  log('SoftMax probabilities computed.', 'info');
+}
+
+// ==================== ASSIGNMENT ====================
+function assignPatients() {
+  if (softmaxResults.length === 0) { alert('Please compute SoftMax probabilities first.'); return; }
+
+  const capICU = parseInt(document.getElementById('cap-icu').value);
+  const capER  = parseInt(document.getElementById('cap-er').value);
+  const capFT  = parseInt(document.getElementById('cap-ft').value);
+
+  let countICU = 0, countER = 0, countFT = 0;
+
+  assignmentResults = softmaxResults.map(r => {
+    const best = r.pICU >= r.pER && r.pICU >= r.pFT ? 'ICU' : r.pER >= r.pFT ? 'ER' : 'FT';
+    if (best === 'ICU') countICU++;
+    else if (best === 'ER') countER++;
+    else countFT++;
+    return { ...r, assigned: best };
+  });
+
+  // Update unit cards
+  const pctICU = Math.round((countICU / capICU) * 100);
+  const pctER  = Math.round((countER  / capER)  * 100);
+  const pctFT  = Math.round((countFT  / capFT)  * 100);
+
+  document.getElementById('icu-occupied').textContent = countICU;
+  document.getElementById('er-occupied').textContent  = countER;
+  document.getElementById('ft-occupied').textContent  = countFT;
+  document.getElementById('icu-cap-display').textContent = capICU;
+  document.getElementById('er-cap-display').textContent  = capER;
+  document.getElementById('ft-cap-display').textContent  = capFT;
+  document.getElementById('icu-congestion').textContent = pctICU + '%';
+  document.getElementById('er-congestion').textContent  = pctER  + '%';
+  document.getElementById('ft-congestion').textContent  = pctFT  + '%';
+  document.getElementById('icu-bar').style.width = pctICU + '%';
+  document.getElementById('er-bar').style.width  = pctER  + '%';
+  document.getElementById('ft-bar').style.width  = pctFT  + '%';
+
+  const tbody = document.getElementById('assignment-table');
+  tbody.innerHTML = assignmentResults.map(r => `
+    <tr class="animate-in">
+      <td class="val val-accent">${r.id} — ${r.name}</td>
+      <td>${getESIBadge(r.esi)}</td>
+      <td class="val">${r.severity.toFixed(1)}</td>
+      <td class="val" style="color:var(--icu)">${(r.pICU*100).toFixed(0)}%</td>
+      <td class="val" style="color:var(--er)">${(r.pER*100).toFixed(0)}%</td>
+      <td class="val" style="color:var(--ft)">${(r.pFT*100).toFixed(0)}%</td>
+      <td>${r.assigned === 'ICU' ? '<span class="unit-badge unit-icu">ICU</span>' : r.assigned === 'ER' ? '<span class="unit-badge unit-er">ER</span>' : '<span class="unit-badge unit-ft">Fast Track</span>'}</td>
+    </tr>
+  `).join('');
+
+  log(`Patients assigned — ICU:${countICU}, ER:${countER}, FastTrack:${countFT}`, 'success');
+}
+
+// ==================== QUEUE ====================
+function computeQueue() {
+  if (assignmentResults.length === 0) { alert('Please assign patients first.'); return; }
+
+  const muICU = parseFloat(document.getElementById('mu-icu').value);
+  const muER  = parseFloat(document.getElementById('mu-er').value);
+  const muFT  = parseFloat(document.getElementById('mu-ft').value);
+  const capICU = parseInt(document.getElementById('cap-icu').value);
+  const capER  = parseInt(document.getElementById('cap-er').value);
+  const capFT  = parseInt(document.getElementById('cap-ft').value);
+
+  const nICU = assignmentResults.filter(r => r.assigned === 'ICU').length;
+  const nER  = assignmentResults.filter(r => r.assigned === 'ER').length;
+  const nFT  = assignmentResults.filter(r => r.assigned === 'FT').length;
+
+  const wICU = parseFloat((nICU / muICU).toFixed(1));
+  const wER  = parseFloat((nER  / muER).toFixed(1));
+  const wFT  = parseFloat((nFT  / muFT).toFixed(1));
+
+  queueResults = { ICU: wICU, ER: wER, FT: wFT };
+
+  const pctICU = Math.round((nICU / capICU) * 100);
+  const pctER  = Math.round((nER  / capER)  * 100);
+  const pctFT  = Math.round((nFT  / capFT)  * 100);
+
+  const tbody = document.getElementById('queue-table');
+  tbody.innerHTML = `
+    <tr class="animate-in">
+      <td><span class="unit-badge unit-icu">ICU</span></td>
+      <td class="val">${nICU}</td>
+      <td class="val">${capICU} beds</td>
+      <td class="val" style="color:var(--icu)">${pctICU}%</td>
+      <td class="val">${muICU} /min</td>
+      <td class="val val-critical">${wICU} mins</td>
+    </tr>
+    <tr class="animate-in">
+      <td><span class="unit-badge unit-er">ER</span></td>
+      <td class="val">${nER}</td>
+      <td class="val">${capER} beds</td>
+      <td class="val" style="color:var(--er)">${pctER}%</td>
+      <td class="val">${muER} /min</td>
+      <td class="val val-warning">${wER} mins</td>
+    </tr>
+    <tr class="animate-in">
+      <td><span class="unit-badge unit-ft">Fast Track</span></td>
+      <td class="val">${nFT}</td>
+      <td class="val">${capFT} beds</td>
+      <td class="val" style="color:var(--ft)">${pctFT}%</td>
+      <td class="val">${muFT} /min</td>
+      <td class="val val-safe">${wFT} mins</td>
+    </tr>
+  `;
+
+  log(`Queue computed — W(ICU):${wICU}min, W(ER):${wER}min, W(FT):${wFT}min`, 'info');
+}
+
+// ==================== DETERIORATION ====================
+function computeDeterioration() {
+  if (Object.keys(queueResults).length === 0) { alert('Please compute queue first.'); return; }
+
+  const dICU = parseFloat(document.getElementById('delta-icu').value);
+  const dER  = parseFloat(document.getElementById('delta-er').value);
+  const dFT  = parseFloat(document.getElementById('delta-ft').value);
+
+  deteriorationResults = assignmentResults.map(r => {
+    const delta = r.assigned === 'ICU' ? dICU : r.assigned === 'ER' ? dER : dFT;
+    const w = queueResults[r.assigned] || 0;
+    const increase = parseFloat((delta * w).toFixed(2));
+    const sNew = parseFloat((r.severity + increase).toFixed(2));
+    return { ...r, delta, w, increase, sNew, worsened: sNew > r.severity };
+  });
+
+  const tbody = document.getElementById('deterioration-table');
+  tbody.innerHTML = deteriorationResults.map(r => `
+    <tr class="animate-in ${r.worsened ? 'highlight-row' : ''}">
+      <td class="val val-accent">${r.id} — ${r.name}</td>
+      <td>${r.assigned === 'ICU' ? '<span class="unit-badge unit-icu">ICU</span>' : r.assigned === 'ER' ? '<span class="unit-badge unit-er">ER</span>' : '<span class="unit-badge unit-ft">Fast Track</span>'}</td>
+      <td class="val">${r.severity.toFixed(2)}</td>
+      <td class="val">${r.delta}</td>
+      <td class="val">${r.w}</td>
+      <td class="val val-critical">+${r.increase.toFixed(2)}</td>
+      <td class="val val-critical">${r.sNew.toFixed(2)}</td>
+      <td>${r.worsened ? '<span class="deteriorated">✅ Yes</span>' : '<span class="stable">❌ No</span>'}</td>
+    </tr>
+  `).join('');
+
+  log('Severity deterioration computed for all patients.', 'warn');
+}
+
+// ==================== ESI UPDATE ====================
+function computeESIUpdate() {
+  if (deteriorationResults.length === 0) { alert('Please compute deterioration first.'); return; }
+
+  esiUpdateResults = deteriorationResults.map(r => {
+    const esiNew = getESIFromSeverity(r.sNew);
+    const changed = esiNew !== r.esi;
+    let action = 'No action required';
+    if (changed && esiNew < r.esi) {
+      if (esiNew <= 2 && r.assigned !== 'ICU') action = '⚠️ Reassign to ICU';
+      else if (esiNew === 3 && r.assigned === 'FT') action = '⚠️ Reassign to ER';
+      else action = '⚠️ Monitor closely';
+    }
+    return { ...r, esiNew, changed, action };
+  });
+
+  // Alerts
+  const alertsEl = document.getElementById('esi-alerts');
+  const deteriorated = esiUpdateResults.filter(r => r.changed);
+  if (deteriorated.length > 0) {
+    alertsEl.innerHTML = deteriorated.map(r => `
+      <div class="alert alert-danger animate-in">
+        ⚠️ <strong>${r.id} (${r.name})</strong> — ESI changed from ${r.esi} → ${r.esiNew}. ${r.action}
+      </div>
+    `).join('');
+  } else {
+    alertsEl.innerHTML = '<div class="alert alert-success animate-in">✅ No patients require ESI level changes.</div>';
+  }
+
+  const tbody = document.getElementById('esi-table');
+  tbody.innerHTML = esiUpdateResults.map(r => `
+    <tr class="animate-in ${r.changed ? 'highlight-row' : ''}">
+      <td class="val val-accent">${r.id} — ${r.name}</td>
+      <td class="val">${r.severity.toFixed(2)}</td>
+      <td>${getESIBadge(r.esi)}</td>
+      <td class="val val-critical">${r.sNew.toFixed(2)}</td>
+      <td>${getESIBadge(r.esiNew)}</td>
+      <td>${r.changed ? '<span class="deteriorated">⬆️ Deteriorated</span>' : '<span class="stable">✅ Stable</span>'}</td>
+      <td style="font-size:12px">${r.action}</td>
+    </tr>
+  `).join('');
+
+  log(`ESI update complete — ${deteriorated.length} patient(s) deteriorated.`, deteriorated.length > 0 ? 'error' : 'success');
+}
+
+// Init
+loadDefaults();
+</script>
+</body>
+</html>
