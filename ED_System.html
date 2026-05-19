@@ -715,10 +715,6 @@
             <option value="5">ESI 5 — Minor</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Severity Score (auto)</label>
-          <input type="number" id="p-severity" placeholder="Auto from ESI" step="0.1" min="0" max="15">
-        </div>
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="addPatient()">+ Register Patient</button>
@@ -1164,10 +1160,9 @@ function addPatient() {
   const name = document.getElementById('p-name').value.trim();
   const age  = parseInt(document.getElementById('p-age').value);
   const esi  = parseInt(document.getElementById('p-esi').value);
-  let sev    = parseFloat(document.getElementById('p-severity').value);
+  const sev = getSeverityFromESI(esi);
 
   if (!name || !age || !esi) { alert('Please fill in Name, Age, and ESI Level.'); return; }
-  if (isNaN(sev) || sev === 0) sev = getSeverityFromESI(esi);
 
   const id = 'P' + String(patients.length + 1).padStart(3, '0');
   patients.push({ id, name, age, esi, severity: sev });
