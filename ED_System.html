@@ -806,6 +806,7 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="computeUtility()">Compute Utility</button>
+        <button class="btn btn-danger btn-sm" onclick="clearUtility()">Clear Utility</button>
       </div>
     </div>
 
@@ -838,6 +839,7 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="computeSoftmax()">Compute SoftMax</button>
+        <button class="btn btn-danger btn-sm" onclick="clearSoftmax()">Clear SoftMax</button>
       </div>
     </div>
 
@@ -874,6 +876,7 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="assignPatients()">Assign Patients</button>
+        <button class="btn btn-danger btn-sm" onclick="clearAssignment()">Clear Assignment</button>
       </div>
     </div>
 
@@ -974,6 +977,7 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="computeQueue()">Compute Queue</button>
+        <button class="btn btn-danger btn-sm" onclick="clearQueue()">Clear Queue</button>
       </div>
     </div>
 
@@ -1017,6 +1021,7 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="computeDeterioration()">Compute Deterioration</button>
+        <button class="btn btn-danger btn-sm" onclick="clearDeterioration()">Clear Deterioration</button>
       </div>
     </div>
 
@@ -1046,6 +1051,7 @@
       <div class="card-title">ESI Update</div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="computeESIUpdate()">Update ESI Levels</button>
+        <button class="btn btn-danger btn-sm" onclick="clearESIUpdate()">Clear ESI Update</button>
       </div>
     </div>
 
@@ -1256,6 +1262,77 @@ function computeUtility() {
   `).join('');
 
   log('Utility scores computed for all patients.', 'info');
+}
+
+function clearUtility() {
+  utilityResults = [];
+  softmaxResults = [];
+  assignmentResults = [];
+  queueResults = {};
+  deteriorationResults = [];
+  esiUpdateResults = [];
+
+  document.getElementById('utility-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📊</div><p>Utility results cleared.</p></div></td></tr>';
+  document.getElementById('softmax-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📈</div><p>Click "Compute SoftMax" to calculate</p></div></td></tr>';
+  document.getElementById('assignment-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🏥</div><p>Click "Assign Patients" to proceed</p></div></td></tr>';
+  document.getElementById('queue-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⏱️</div><p>Click "Compute Queue" to calculate</p></div></td></tr>';
+  document.getElementById('deterioration-table').innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📉</div><p>Click "Compute Deterioration" to calculate</p></div></td></tr>';
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
+  document.getElementById('icu-occupied').textContent = '0';
+  document.getElementById('er-occupied').textContent = '0';
+  document.getElementById('ft-occupied').textContent = '0';
+  document.getElementById('icu-congestion').textContent = '0%';
+  document.getElementById('er-congestion').textContent = '0%';
+  document.getElementById('ft-congestion').textContent = '0%';
+  document.getElementById('icu-bar').style.width = '0%';
+  document.getElementById('er-bar').style.width = '0%';
+  document.getElementById('ft-bar').style.width = '0%';
+}
+
+function clearSoftmax() {
+  softmaxResults = [];
+  document.getElementById('softmax-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📈</div><p>SoftMax results cleared.</p></div></td></tr>';
+}
+
+function clearAssignment() {
+  assignmentResults = [];
+  queueResults = {};
+  deteriorationResults = [];
+  esiUpdateResults = [];
+  document.getElementById('assignment-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🏥</div><p>Click "Assign Patients" to proceed</p></div></td></tr>';
+  document.getElementById('queue-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⏱️</div><p>Click "Compute Queue" to calculate</p></div></td></tr>';
+  document.getElementById('deterioration-table').innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📉</div><p>Click "Compute Deterioration" to calculate</p></div></td></tr>';
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
+  document.getElementById('icu-occupied').textContent = '0';
+  document.getElementById('er-occupied').textContent = '0';
+  document.getElementById('ft-occupied').textContent = '0';
+  document.getElementById('icu-congestion').textContent = '0%';
+  document.getElementById('er-congestion').textContent = '0%';
+  document.getElementById('ft-congestion').textContent = '0%';
+  document.getElementById('icu-bar').style.width = '0%';
+  document.getElementById('er-bar').style.width = '0%';
+  document.getElementById('ft-bar').style.width = '0%';
+}
+
+function clearQueue() {
+  queueResults = {};
+  document.getElementById('queue-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">⏱️</div><p>Queue results cleared.</p></div></td></tr>';
+}
+
+function clearDeterioration() {
+  deteriorationResults = [];
+  esiUpdateResults = [];
+  document.getElementById('deterioration-table').innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📉</div><p>Deterioration results cleared.</p></div></td></tr>';
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
+}
+
+function clearESIUpdate() {
+  esiUpdateResults = [];
+  document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>ESI update results cleared.</p></div></td></tr>';
+  document.getElementById('esi-alerts').innerHTML = '';
 }
 
 // ==================== SOFTMAX ====================
