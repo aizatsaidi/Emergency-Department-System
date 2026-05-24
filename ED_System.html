@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ED Simulation System</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
   :root {
     --bg: #0a0e1a;
@@ -105,6 +106,14 @@
   .tab:hover:not(.active) { color:var(--text); }
   .tab-content { display:none; }
   .tab-content.active { display:block; }
+  .grid-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media(max-width:900px) {
+    .grid-charts { grid-template-columns: 1fr; }
+  }
 
   /* CARDS */
   .card {
@@ -441,6 +450,7 @@
       <button class="tab" onclick="switchTab('queue')">⑤ Queue</button>
       <button class="tab" onclick="switchTab('deterioration')">⑥ Deterioration</button>
       <button class="tab" onclick="switchTab('esi')">⑦ ESI Update</button>
+      <button class="tab" onclick="switchTab('charts')">📊 Charts</button>
     </div>
 
     <!-- UTILITY -->
@@ -620,6 +630,34 @@
       </div>
     </div>
 
+    <!-- CHARTS -->
+    <div id="tab-charts" class="tab-content">
+      <div class="card">
+        <div class="card-title">Simulation Charts</div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="renderCharts()">Generate Charts</button>
+        </div>
+      </div>
+      <div class="grid-charts">
+        <div class="card">
+          <div class="card-title">Severity Before vs After</div>
+          <canvas id="chart-severity"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Assignment Probabilities</div>
+          <canvas id="chart-probability"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Waiting Time Per Unit</div>
+          <canvas id="chart-waiting"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Unit Occupancy</div>
+          <canvas id="chart-occupancy"></canvas>
+        </div>
+      </div>
+    </div>
+
   </div><!-- end admin view -->
 
 </div><!-- end container -->
@@ -641,7 +679,7 @@ function switchTab(name) {
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(`tab-${name}`).classList.add('active');
-  ['utility','softmax','assignment','queue','deterioration','esi'].forEach((t,i)=>{
+  ['utility','softmax','assignment','queue','deterioration','esi','charts'].forEach((t,i)=>{
     if(t===name) document.querySelectorAll('.tab')[i].classList.add('active');
   });
 }
@@ -1071,6 +1109,125 @@ function clearESIUpdate() {
   document.getElementById('esi-table').innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔄</div><p>Click "Update ESI Levels" to calculate</p></div></td></tr>';
   document.getElementById('esi-alerts').innerHTML = '';
   log('ESI update results cleared.', 'warn');
+}
+
+// ===== CHARTS =====
+let chartSeverity = null, chartProbability = null, chartWaiting = null, chartOccupancy = null;
+
+function renderCharts() {
+  if(deteriorationResults.length===0){ alert('Please run simulation first.'); return; }
+
+  const labels = patients.map(p=>p.id);
+  const chartDefaults = {
+    plugins: { legend: { labels: { color: '#e2e8f0', font: { family: 'Space Mono' } } } },
+    scales: {
+      x: { ticks: { color: '#64748b' }, grid: { color: '#1e2d45' } },
+      y: { ticks: { color: '#64748b' }, grid: { color: '#1e2d45' } }
+    }
+  };
+
+  if(chartSeverity) chartSeverity.destroy();
+  chartSeverity = new Chart(document.getElementById('chart-severity'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'S_old',
+          data: deteriorationResults.map(r=>r.severity),
+          backgroundColor: 'rgba(0,212,255,0.6)',
+          borderColor: '#00d4ff',
+          borderWidth: 1
+        },
+        {
+          label: 'S_new',
+          data: deteriorationResults.map(r=>r.sNew),
+          backgroundColor: 'rgba(255,59,92,0.6)',
+          borderColor: '#ff3b5c',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: { ...chartDefaults, responsive: true }
+  });
+
+  if(chartProbability) chartProbability.destroy();
+  chartProbability = new Chart(document.getElementById('chart-probability'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'P(ICU)',
+          data: softmaxResults.map(r=>parseFloat((r.pICU*100).toFixed(0))),
+          backgroundColor: 'rgba(255,59,92,0.6)',
+          borderColor: '#ff3b5c',
+          borderWidth: 1
+        },
+        {
+          label: 'P(ER)',
+          data: softmaxResults.map(r=>parseFloat((r.pER*100).toFixed(0))),
+          backgroundColor: 'rgba(255,170,0,0.6)',
+          borderColor: '#ffaa00',
+          borderWidth: 1
+        },
+        {
+          label: 'P(FT)',
+          data: softmaxResults.map(r=>parseFloat((r.pFT*100).toFixed(0))),
+          backgroundColor: 'rgba(0,229,160,0.6)',
+          borderColor: '#00e5a0',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      responsive: true,
+      scales: {
+        ...chartDefaults.scales,
+        y: { ...chartDefaults.scales.y, max: 100, title: { display: true, text: '%', color: '#64748b' } }
+      }
+    }
+  });
+
+  if(chartWaiting) chartWaiting.destroy();
+  chartWaiting = new Chart(document.getElementById('chart-waiting'), {
+    type: 'bar',
+    data: {
+      labels: ['ICU', 'ER', 'Fast Track'],
+      datasets: [{
+        label: 'Waiting Time (mins)',
+        data: [queueResults.ICU||0, queueResults.ER||0, queueResults.FT||0],
+        backgroundColor: ['rgba(255,59,92,0.6)', 'rgba(255,170,0,0.6)', 'rgba(0,229,160,0.6)'],
+        borderColor: ['#ff3b5c', '#ffaa00', '#00e5a0'],
+        borderWidth: 1
+      }]
+    },
+    options: { ...chartDefaults, responsive: true }
+  });
+
+  if(chartOccupancy) chartOccupancy.destroy();
+  const nICU=assignmentResults.filter(r=>r.assigned==='ICU').length;
+  const nER=assignmentResults.filter(r=>r.assigned==='ER').length;
+  const nFT=assignmentResults.filter(r=>r.assigned==='FT').length;
+  chartOccupancy = new Chart(document.getElementById('chart-occupancy'), {
+    type: 'doughnut',
+    data: {
+      labels: ['ICU', 'ER', 'Fast Track'],
+      datasets: [{
+        data: [nICU, nER, nFT],
+        backgroundColor: ['rgba(255,59,92,0.6)', 'rgba(255,170,0,0.6)', 'rgba(0,229,160,0.6)'],
+        borderColor: ['#ff3b5c', '#ffaa00', '#00e5a0'],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#e2e8f0', font: { family: 'Space Mono' } } } }
+    }
+  });
+
+  log('Charts generated.', 'success');
 }
 
 // Init
