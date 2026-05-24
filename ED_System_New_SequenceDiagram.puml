@@ -1,0 +1,60 @@
+@startuml
+title ED Simulation System - Combined Sequence Diagram\n(Nurse View + Admin View)
+
+skinparam ParticipantBackgroundColor #f0f8ff
+skinparam ParticipantBorderColor #1e88e5
+skinparam ActorBackgroundColor #e8f5e9
+skinparam ActorBorderColor #2e7d32
+skinparam BoxBackgroundColor #fff3e0
+skinparam BoxBorderColor #f57c00
+
+actor "Nurse / User" as Nurse #2e7d32
+actor "Admin / Technical User" as Admin #1565c0
+
+box "ED Simulation System" #e3f2fd
+    participant "Nurse Interface" as NurseUI #e8f5e9
+    participant "Admin Interface" as AdminUI #bbdefb
+    participant "Simulation Engine" as Engine #fff3e0
+end box
+
+== Nurse View Flow ==
+Nurse -> NurseUI : **Register Patient** <<register>>
+NurseUI -> Engine : addPatient()
+Engine --> NurseUI : Patient Added
+NurseUI --> Nurse : Update Patient List
+
+Nurse -> NurseUI : **Run Simulation** <<simulation>>
+NurseUI -> Engine : runFullSimulation()
+
+Engine -> Engine : **Compute Utility → SoftMax → Assignment** #ff9800
+Engine -> Engine : **Compute Queue → Deterioration → ESI** #f44336
+
+Engine --> NurseUI : Update Unit Cards
+Engine --> NurseUI : Update Patient List + Alerts
+NurseUI --> Nurse : **Simulation Complete**
+
+Nurse -> NurseUI : Select Patient
+NurseUI -> Engine : selectPatient()
+Engine --> NurseUI : Patient Details
+NurseUI --> Nurse : Show Detail Panel
+
+Nurse -> NurseUI : **Generate Charts**
+NurseUI -> Engine : renderCharts()
+Engine --> NurseUI : Severity, Probability, Waiting Time, Occupancy Charts
+
+== Admin / Technical View Flow ==
+Admin -> AdminUI : Switch to Admin View
+
+Admin -> AdminUI : **Compute Step by Step**
+AdminUI -> Engine : computeUtility() / computeSoftmax() etc.
+Engine --> AdminUI : Show Detailed Tables
+
+Admin -> AdminUI : View Queue / Deterioration / ESI
+AdminUI -> Engine : computeQueue() / computeDeterioration() / computeESIUpdate()
+Engine --> AdminUI : Return Analysis Results
+
+== Shared Actions ==
+NurseUI <--> AdminUI : Shared Data (patients, results)
+Admin -> AdminUI : Load Sample Data / Clear All
+
+@enduml

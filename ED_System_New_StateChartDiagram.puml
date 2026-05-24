@@ -1,0 +1,59 @@
+@startuml
+title ED Simulation System - Patient Lifecycle State Chart
+
+skinparam StateBackgroundColor #f8f9fa
+skinparam StateBorderColor #1e88e5
+skinparam ArrowColor #ff9800
+skinparam Shadowing false
+
+[*] --> Registered
+
+state Registered {
+  [*] --> WaitingForSimulation
+}
+
+WaitingForSimulation --> Assigned : Run Simulation
+
+state Assigned {
+  [*] --> InQueue
+}
+
+InQueue --> Deteriorating : Waiting Time Accumulates
+
+Deteriorating --> SeverityUpdated : S_new = S_old + (δ × W)
+
+SeverityUpdated --> ESI_Updated : Update ESI Level
+
+state ESI_Updated {
+  [*] --> Stable
+  Stable --> ConditionWorsened : Severity Increased
+}
+
+ConditionWorsened --> Reassigned : Need Higher Care
+
+Reassigned --> Assigned : Move to New Unit
+
+Stable --> Treated : Service Complete
+
+Treated --> Discharged
+
+Discharged --> [*]
+
+note right of WaitingForSimulation
+  Patient Registered
+  (Name, Age, ESI)
+end note
+
+note right of Assigned
+  Assigned to:
+  • ICU
+  • ER  
+  • Fast Track
+end note
+
+note right of Deteriorating
+  Severity increases
+  based on waiting time
+end note
+
+@enduml

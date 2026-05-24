@@ -1,0 +1,66 @@
+@startuml
+title ED Simulation System - Use Case Diagram
+
+skinparam ActorBackgroundColor #e8f5e9
+skinparam ActorBorderColor #2e7d32
+skinparam UseCaseBackgroundColor #f0f8ff
+skinparam UseCaseBorderColor #1565c0
+
+left to right direction
+
+actor "Nurse" as Nurse #2e7d32
+actor "Admin" as Admin #1565c0
+
+rectangle "ED Simulation System" {
+
+  usecase "Register Patient" as UC1
+  usecase "Load Sample Data" as UC2
+  usecase "Run Full Simulation" as UC3
+  usecase "View Patient Details" as UC4
+  usecase "Generate Charts" as UC5
+  usecase "Clear All Data" as UC6
+
+  usecase "Compute Utility" as UC7
+  usecase "Compute SoftMax" as UC8
+  usecase "Assign Patients" as UC9
+  usecase "Compute Queue" as UC10
+  usecase "Compute Deterioration" as UC11
+  usecase "Update ESI Levels" as UC12
+
+  ' Main Nurse flows
+  Nurse --> UC1
+  Nurse --> UC2
+  Nurse --> UC3
+  Nurse --> UC4
+  Nurse --> UC5
+  Nurse --> UC6
+
+  ' Admin flows
+  Admin --> UC1
+  Admin --> UC2
+  Admin --> UC7
+  Admin --> UC8
+  Admin --> UC9
+  Admin --> UC10
+  Admin --> UC11
+  Admin --> UC12
+  Admin --> UC6
+
+  ' Relationships with shorter connections
+  UC3 ..> UC7 : <<include>>
+  UC3 ..> UC8 : <<include>>
+  UC3 ..> UC9 : <<include>>
+  UC3 ..> UC10 : <<include>>
+  UC3 ..> UC11 : <<include>>
+  UC3 ..> UC12 : <<include>>
+
+  UC4 ..> UC3 : <<extend>>
+  UC5 ..> UC3 : <<extend>>
+}
+
+note right of UC3
+  Main simulation workflow that triggers
+  multiple calculations automatically
+end note
+
+@enduml
